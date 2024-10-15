@@ -5,44 +5,45 @@ import pygame
 import random
 import numpy as np
 
+# Importation des constantes pour les dimensions, les couleurs, etc.
 from constants import *
 
 # --- CONFIGURATION DE PYGAME ---
 
-pygame.init() # Initialise tous les modules Pygame
-
-# Création de la fenêtre Pygame 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('TIC TAC TOE AI')
-screen.fill(BG_COLOR)
+pygame.init()  # Initialise tous les modules Pygame
+screen = pygame.display.set_mode((WIDTH, HEIGHT))  # Crée la fenêtre du jeu
+pygame.display.set_caption('TIC TAC TOE AI')  # Définit le titre de la fenêtre
+screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
 
 # --- CLASSES ---
 
+# Classe représentant le tableau de jeu
 class Board:
 
-    # Fonction pour initialiser le tableau de jeu (plateau de 3x3, rempli de zéros)
+    # Initialisation du tableau de jeu (une matrice 3x3 remplie de zéros)
     def __init__(self):
-        self.squares = np.zeros((ROWS, COLS))
-        self.empty_squares = self.squares # [squares]
-        self.marked_squares = 0
+        self.squares = np.zeros((ROWS, COLS))  # Création du tableau avec des zéros
+        self.empty_squares = self.squares  # Stockage des cases vides
+        self.marked_squares = 0  # Compteur pour le nombre de cases marquées
 
+    # Fonction pour vérifier l'état final du jeu (victoire ou non)
     def final_state(self, show=False):
         '''
             @return 0 if there is no win yet
             @return 1 if player 1 wins
             @return 2 if player 2 wins
         '''
-        # vertical wins
+        # Vérifie les colonnes pour une victoire verticale
         for col in range(COLS):
             if self.squares[0][col] == self.squares[1][col] == self.squares[2][col] != 0:
-                if show:
+                if show:  # Si activé, dessine une ligne pour montrer la victoire
                     color = CROSS_COLOR if self.squares[0][col] == 2 else CIRCLE_COLOR
                     iPos = (col * SQUARE_SIZE + SQUARE_SIZE // 2, 20)
                     fPos = (col * SQUARE_SIZE + SQUARE_SIZE // 2, HEIGHT - 20)
                     pygame.draw.line(screen, color, iPos, fPos, LINE_WIDTH)
                 return self.squares[0][col]
 
-        # horizontal wins
+        # Vérifie les lignes pour une victoire horizontale
         for row in range(ROWS):
             if self.squares[row][0] == self.squares[row][1] == self.squares[row][2] != 0:
                 if show:
@@ -52,7 +53,7 @@ class Board:
                     pygame.draw.line(screen, color, iPos, fPos, LINE_WIDTH)
                 return self.squares[row][0]
 
-        # desc diagonal
+        # Vérifie la diagonale descendante pour une victoire
         if self.squares[0][0] == self.squares[1][1] == self.squares[2][2] != 0:
             if show:
                 color = CROSS_COLOR if self.squares[1][1] == 2 else CIRCLE_COLOR
@@ -61,7 +62,7 @@ class Board:
                 pygame.draw.line(screen, color, iPos, fPos, CROSS_WIDTH)
             return self.squares[1][1]
 
-        # asc diagonal
+        # Vérifie la diagonale ascendante pour une victoire
         if self.squares[2][0] == self.squares[1][1] == self.squares[0][2] != 0:
             if show:
                 color = CROSS_COLOR if self.squares[1][1] == 2 else CIRCLE_COLOR
@@ -70,227 +71,246 @@ class Board:
                 pygame.draw.line(screen, color, iPos, fPos, CROSS_WIDTH)
             return self.squares[1][1]
 
-        # no win yet
+        # Si aucun joueur n'a gagné, retourne 0
         return 0
 
-    # Fonction pour marquer une case avec le joueur actuel (1 pour cercle, 2 pour croix)
+    # Marque une case spécifique pour un joueur (1 pour cercle, 2 pour croix)
     def mark_square(self, row, col, player):
-        self.squares[row][col] = player
-        self.marked_squares += 1
+        self.squares[row][col] = player  # Place le symbole du joueur dans la case
+        self.marked_squares += 1  # Incrémente le compteur de cases marquées
 
-    # Fonction pour vérifier si une case est disponible
+    # Vérifie si une case est vide
     def empty_square(self, row, col):
-        return self.squares[row][col] == 0
+        return self.squares[row][col] == 0  # Retourne True si la case est vide
     
+    # Retourne une liste des cases vides restantes
     def get_empty_squares(self):
         empty_squares = []
         for row in range(ROWS):
             for col in range(COLS):
                 if self.empty_square(row, col):
-                    empty_squares.append((row, col))
-
+                    empty_squares.append((row, col))  # Ajoute les coordonnées des cases vides
         return empty_squares
     
+    # Vérifie si le plateau est plein
     def isfull(self):
-        return self.marked_squares == 9
+        return self.marked_squares == 9  # Retourne True si toutes les cases sont marquées
     
+    # Vérifie si le plateau est vide
     def isempty(self):
-        return self.marked_squares == 0
+        return self.marked_squares == 0  # Retourne True si aucune case n'est marquée
 
+# Classe représentant l'intelligence artificielle
 class AI:
     
-    def __init__(self, level = 1, player = 2):
-        self.level = level
-        self.player = player
+    def __init__(self, level=1, player=2):
+        self.level = level  # Niveau de difficulté de l'IA (0 = facile, 1 = difficile)
+        self.player = player  # Définit quel joueur est contrôlé par l'IA
 
+    # --- NIVEAU ALEATOIRE (facile) ---   
+
+    # Choisit une case vide au hasard
     def rnd(self, board):
-        empty_squares = board.get_empty_squares()
-        idx = random.randrange(0, len(empty_squares))
+        empty_squares = board.get_empty_squares()  # Récupère les cases vides
+        idx = random.randrange(0, len(empty_squares))  # Choisit une case au hasard
+        return empty_squares[idx]  # Retourne la case choisie (ligne, colonne)
 
-        return empty_squares[idx] # (row, col)
+    # --- ALGORITHME MINIMAX (difficile) ---
 
+    # Fonction minimax pour trouver le meilleur coup possible
     def minimax(self, board, maximizing):
-        
-        # terminal case
+        # Cas terminal : vérifie si un joueur a gagné ou si c'est une égalité
         case = board.final_state()
 
-        # player 1 wins
+        # Si le joueur 1 gagne
         if case == 1:
-            return 1, None # eval, move
+            return 1, None  # Retourne une évaluation positive
 
-        # player 2 wins
+        # Si le joueur 2 gagne
         if case == 2:
-            return -1, None
+            return -1, None  # Retourne une évaluation négative
 
-        # draw
+        # Si c'est une égalité
         elif board.isfull():
-            return 0, None
+            return 0, None  # Retourne une évaluation neutre
 
+        # Si c'est au tour du joueur maximisant (joueur 1)
         if maximizing:
-            max_eval = -100
-            best_move = None
-            empty_squares = board.get_empty_squares()
+            max_eval = -100  # Initialise une évaluation basse
+            best_move = None  # Initialise le meilleur mouvement
+            empty_squares = board.get_empty_squares()  # Récupère les cases vides
 
+            # Explore chaque case vide et évalue chaque possibilité
             for (row, col) in empty_squares:
-                temp_board = copy.deepcopy(board)
-                temp_board.mark_square(row, col, 1)
-                eval = self.minimax(temp_board, False)[0]
+                temp_board = copy.deepcopy(board)  # Crée un tableau temporaire
+                temp_board.mark_square(row, col, 1)  # Marque la case pour le joueur 1
+                eval = self.minimax(temp_board, False)[0]  # Appelle minimax de manière récursive
                 if eval > max_eval:
-                    max_eval = eval
-                    best_move = (row, col)
-
+                    max_eval = eval  # Met à jour la meilleure évaluation
+                    best_move = (row, col)  # Met à jour le meilleur mouvement
             return max_eval, best_move
 
+        # Si c'est au tour du joueur minimisant (joueur 2)
         elif not maximizing:
-            min_eval = 100
+            min_eval = 100  # Initialise une évaluation haute
             best_move = None
             empty_squares = board.get_empty_squares()
 
+            # Explore chaque case vide et évalue chaque possibilité
             for (row, col) in empty_squares:
-                temp_board = copy.deepcopy(board)
-                temp_board.mark_square(row, col, self.player)
-                eval = self.minimax(temp_board, True)[0]
+                temp_board = copy.deepcopy(board)  # Crée un tableau temporaire
+                temp_board.mark_square(row, col, self.player)  # Marque la case pour le joueur 2
+                eval = self.minimax(temp_board, True)[0]  # Appelle minimax de manière récursive
                 if eval < min_eval:
-                    min_eval = eval
-                    best_move = (row, col)
-
+                    min_eval = eval  # Met à jour la plus basse évaluation
+                    best_move = (row, col)  # Met à jour le meilleur mouvement
             return min_eval, best_move
 
+    # --- EVALUATION PRINCIPALE ---
+
+    # Évalue le prochain coup de l'IA en fonction de son niveau
     def eval(self, main_board):
-        if self.level == 0:
-            # random choice
+        if self.level == 0:  # Si le niveau est facile (0), IA choisit un coup aléatoire
             eval = 'random'
             move = self.rnd(main_board)
-        else:
-            # minimax algo choice
+        else:  # Si le niveau est difficile (1), IA utilise l'algorithme minimax
             eval, move = self.minimax(main_board, False)
-
             print(f'AI has chosen to mark the square in pos {move} with an eval of: {eval}')
 
-        return move # row, col
+        return move  # Retourne le mouvement sélectionné
 
+# Classe représentant le jeu principal
 class Game:
-
+     
     def __init__(self):
-        self.board = Board()
-        self.ai = AI()
-        self.player = 1 #1-circle 2-cross
-        self.gamemode = 'ai' # pvp or ai
-        self.running = True
-        self.show_lines()
+            self.board = Board()  # Initialisation du plateau de jeu
+            self.ai = AI()  # Création d'une instance de l'IA
+            self.player = 1  # Début du jeu avec le joueur 1 (cercle)
+            self.gamemode = 'ai'  # Mode par défaut: joueur vs IA
+            self.running = True  # État du jeu actif
+            self.show_lines()  # Affichage des lignes du plateau
 
-    def make_move(self, row, col):
-        self.board.mark_square(row, col, self.player)
-        self.draw_figures(row, col)
-        self.next_turn()
+    # --- DRAW METHODS ---
 
     # Fonction pour dessiner les lignes du plateau
     def show_lines(self):
-        screen.fill( BG_COLOR )
+        screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
 
-        # Première ligne horizontale
+        # Dessin des lignes verticales
         pygame.draw.line(screen, LINE_COLOR, (SQUARE_SIZE, 0), (SQUARE_SIZE, HEIGHT), LINE_WIDTH)
-        # Deuxième ligne horizontale
         pygame.draw.line(screen, LINE_COLOR, (WIDTH - SQUARE_SIZE, 0), (WIDTH - SQUARE_SIZE, HEIGHT), LINE_WIDTH)
 
-        # Première ligne verticale
+        # Dessin des lignes horizontales
         pygame.draw.line(screen, LINE_COLOR, (0, SQUARE_SIZE), (WIDTH, SQUARE_SIZE), LINE_WIDTH)
-        # Deuxième ligne verticale
         pygame.draw.line(screen, LINE_COLOR, (0, HEIGHT - SQUARE_SIZE), (WIDTH, HEIGHT - SQUARE_SIZE), LINE_WIDTH)
 
     # Fonction pour dessiner les figures (cercles et croix) sur le plateau
     def draw_figures(self, row, col):
         if self.player == 1:
-            # draw circle
+            # Dessin du cercle
             center = (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2)
             pygame.draw.circle(screen, CIRCLE_COLOR, center, CIRCLE_RADIUS, CIRCLE_WIDTH)
-
         elif self.player == 2:
-            # draw cross
-            # desc line
+            # Dessin de la croix
             start_desc = (col * SQUARE_SIZE + OFFSET, row * SQUARE_SIZE + OFFSET)
             end_desc = (col * SQUARE_SIZE + SQUARE_SIZE - OFFSET, row * SQUARE_SIZE + SQUARE_SIZE - OFFSET)
             pygame.draw.line(screen, CROSS_COLOR, start_desc, end_desc, CROSS_WIDTH)
-            # asc line
+
             start_asc = (col * SQUARE_SIZE + OFFSET, row * SQUARE_SIZE + SQUARE_SIZE - OFFSET)
             end_asc = (col * SQUARE_SIZE + SQUARE_SIZE - OFFSET, row * SQUARE_SIZE + OFFSET)
             pygame.draw.line(screen, CROSS_COLOR, start_asc, end_asc, CROSS_WIDTH)
 
-    # Change de joueur (1 ou 2)
+    # --- OTHER METHODS ---
+
+    # Fonction pour effectuer un mouvement
+    def make_move(self, row, col):
+        self.board.mark_square(row, col, self.player)  # Marque la case pour le joueur actuel
+        self.draw_figures(row, col)  # Dessine la figure correspondante sur la case
+        self.next_turn()  # Passe au joueur suivant
+
+    # Alterne entre les joueurs (1 ou 2)
     def next_turn(self):
-        self.player = self.player % 2 + 1 
+        self.player = self.player % 2 + 1  # Change de joueur (modulo)
 
+    # Change le mode de jeu (IA ou PvP)
     def change_gamemode(self):
-        self.gamemode = 'ai' if self.gamemode == 'pvp' else 'pvp'
+        self.gamemode = 'ai' if self.gamemode == 'pvp' else 'pvp'  # Alterne entre les deux modes
 
+    # Vérifie si le jeu est terminé
     def isover(self):
-        return self.board.final_state(show=True) != 0 or self.board.isfull()
+        return self.board.final_state(show=True) != 0 or self.board.isfull()  # Retourne True si le jeu est terminé
 
+    # Réinitialise le jeu
     def reset(self):
-        self.__init__()
+        self.__init__()  # Réinitialise tous les paramètres du jeu
 
+# Fonction principale du jeu
 def main():
 
     # --- OBJECTS ---
 
-    game = Game()
-    board = game.board
-    ai = game.ai
+    game = Game()  # Instancie un objet Game
+    board = game.board  # Référence au plateau du jeu
+    ai = game.ai  # Référence à l'IA
 
     # --- MAINLOOP ---
 
     while True:
-        # Parcourt tous les événements possibles
+        # Gestion des événements
         for event in pygame.event.get():
-            # Si l'utilisateur ferme la fenêtre
+            # Fermeture de la fenêtre
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit
+                pygame.quit()  # Ferme Pygame
+                sys.exit()  # Quitte le programme
 
+            # Gestion des touches du clavier
             if event.type == pygame.KEYDOWN:
 
-                # g-gamemode
+                # g pour changer le mode de jeu
                 if event.key == pygame.K_g:
                     game.change_gamemode()
 
-                # r-restart
+                # r pour redémarrer le jeu
                 if event.key == pygame.K_r:
                     game.reset()
-                    board = game.board
-                    ai = game.ai
+                    board = game.board  # Réinitialise le plateau
+                    ai = game.ai  # Réinitialise l'IA
 
-                # 0-random ai
+                # 0 pour niveau aléatoire de l'IA
                 if event.key == pygame.K_0:
-                    ai.level = 0
-                    
-                # 1-random ai
+                    ai.level = 0  # Niveau facile
+
+                # 1 pour niveau difficile de l'IA
                 if event.key == pygame.K_1:
-                    ai.level = 1
+                    ai.level = 1  # Niveau difficile
 
-            # Si un clic de souris est détecté
+            # Gestion des clics de souris
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = event.pos
-                row = pos[1] // SQUARE_SIZE
-                col = pos[0] // SQUARE_SIZE
+                pos = event.pos  # Récupère la position du clic
+                row = pos[1] // SQUARE_SIZE  # Calcul de la ligne cliquée
+                col = pos[0] // SQUARE_SIZE  # Calcul de la colonne cliquée
 
-                # Si la case cliquée est libre
+                # Si la case cliquée est vide et que le jeu est en cours
                 if board.empty_square(row, col) and game.running:
-                    game.make_move(row, col)
+                    game.make_move(row, col)  # Effectue un mouvement
 
-                if game.isover():
-                    game.running = False
+                if game.isover():  # Si le jeu est terminé
+                    game.running = False  # Arrête le jeu
 
+        # Mode de jeu contre l'IA
         if game.gamemode == 'ai' and game.player == ai.player and game.running:
-            # update the screen
+
+            # Mise à jour de l'écran
             pygame.display.update()
 
-            # ai methods
+            # L'IA effectue son mouvement
             row, col = ai.eval(board)
             game.make_move(row, col)
 
-            if game.isover():
+            if game.isover():  # Si le jeu est terminé après le coup de l'IA
                 game.running = False
 
-        pygame.display.update() # Rafraîchit l'écran pour refléter les changements
+        pygame.display.update()  # Rafraîchit l'affichage du jeu
 
+# Lancement du jeu
 main()

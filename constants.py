@@ -1,5 +1,8 @@
+# ---------
 # CONSTANTS
-# Pixels
+# ---------
+
+# --- PIXELS ---
 WIDTH = 600
 HEIGHT = 600
 
@@ -15,7 +18,8 @@ CIRCLE_RADIUS = SQUARE_SIZE // 4
 
 OFFSET = 50
 
-# Couleurs
+# --- COLORS ---
+
 BG_COLOR = (200,160,230)
 LINE_COLOR = (170,140,210)
 CIRCLE_COLOR = (239,231,200)
