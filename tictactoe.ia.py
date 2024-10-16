@@ -192,6 +192,30 @@ class Game:
 
     # --- DRAW METHODS ---
 
+    def display_end_screen(self, winner):
+        screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
+
+        # Affichage du texte de fin de partie
+        font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
+        if winner == 0:
+            text = font.render('Match Nul', True, LINE_COLOR)
+        else:
+            text = font.render(f'Player {winner} Wins!', True, BLACK)
+        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
+
+        # Affichage des instructions
+        font_small = pygame.font.SysFont(None, 30)
+        instructions = [
+            "Press 'Q' to Quit",
+            "Press 'R' to Restart",
+            "Press 'M' to Change Game Mode",
+            "Press '0' for Easy AI",
+            "Press '1' for Impossible AI"
+        ]
+        for i, instruction in enumerate(instructions):
+            instr_text = font_small.render(instruction, True, BLACK)
+            screen.blit(instr_text, (WIDTH // 2 - instr_text.get_width() // 2, HEIGHT // 2 + i * 40))
+
     # Fonction pour dessiner les lignes du plateau
     def show_lines(self):
         screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
@@ -244,11 +268,11 @@ class Game:
     def reset(self):
         self.__init__()  # Réinitialise tous les paramètres du jeu
 
+# --- BOUCLE PRINCIPALE ---
+
 # Fonction principale du jeu
 def main():
-
-    # --- OBJECTS ---
-
+    # Variables du jeu
     game = Game()  # Instancie un objet Game
     board = game.board  # Référence au plateau du jeu
     ai = game.ai  # Référence à l'IA
@@ -263,54 +287,56 @@ def main():
                 pygame.quit()  # Ferme Pygame
                 sys.exit()  # Quitte le programme
 
-            # Gestion des touches du clavier
+            # Change de mode si l'utilisateur appuie sur la touche "M"
             if event.type == pygame.KEYDOWN:
 
-                # g pour changer le mode de jeu
-                if event.key == pygame.K_g:
-                    game.change_gamemode()
+                if event.key == pygame.K_q:
+                    pygame.quit()
+                    sys.exit()
 
-                # r pour redémarrer le jeu
                 if event.key == pygame.K_r:
                     game.reset()
-                    board = game.board  # Réinitialise le plateau
-                    ai = game.ai  # Réinitialise l'IA
+                    board = game.board
+                    ai = game.ai
 
-                # 0 pour niveau aléatoire de l'IA
+                if event.key == pygame.K_m:
+                    game.change_gamemode() # Change le mode de jeu entre PvP et IA
+                
                 if event.key == pygame.K_0:
-                    ai.level = 0  # Niveau facile
+                    ai.level = 0
 
-                # 1 pour niveau difficile de l'IA
                 if event.key == pygame.K_1:
-                    ai.level = 1  # Niveau difficile
+                    ai.level = 1
 
             # Gestion des clics de souris
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and game.running:
                 pos = event.pos  # Récupère la position du clic
                 row = pos[1] // SQUARE_SIZE  # Calcul de la ligne cliquée
                 col = pos[0] // SQUARE_SIZE  # Calcul de la colonne cliquée
 
-                # Si la case cliquée est vide et que le jeu est en cours
+                # human mark sqr
                 if board.empty_square(row, col) and game.running:
-                    game.make_move(row, col)  # Effectue un mouvement
+                    game.make_move(row, col)
 
-                if game.isover():  # Si le jeu est terminé
-                    game.running = False  # Arrête le jeu
+                    if game.isover():
+                        game.running = False
+                        winner = board.final_state()  # Déterminer le gagnant ou si match nul
+                        game.display_end_screen(winner)  # Afficher l'écran de fin
 
         # Mode de jeu contre l'IA
         if game.gamemode == 'ai' and game.player == ai.player and game.running:
-
-            # Mise à jour de l'écran
             pygame.display.update()
 
             # L'IA effectue son mouvement
             row, col = ai.eval(board)
             game.make_move(row, col)
 
-            if game.isover():  # Si le jeu est terminé après le coup de l'IA
+            if game.isover():
                 game.running = False
+                winner = board.final_state()  # Déterminer le gagnant ou si match nul
+                game.display_end_screen(winner)  # Afficher l'écran de fin
 
-        pygame.display.update()  # Rafraîchit l'affichage du jeu
+        # Mise à jour de l'écran
+        pygame.display.update()
 
-# Lancement du jeu
 main()
