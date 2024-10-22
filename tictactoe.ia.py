@@ -194,26 +194,27 @@ class Game:
 
     def display_end_screen(self, player):
         screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
-
-        # Affichage du texte de fin de partie
-        font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
         
+    # Affichage du cercle ou de la croix en haut de l'écran
+        if player == 1:
+            pygame.draw.circle(screen, CIRCLE_COLOR, (WIDTH // 2, HEIGHT // 2 - 100), CIRCLE_RADIUS, CIRCLE_WIDTH)
+        elif player == 2:
+            pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 100 + SQUARE_SIZE // 2 - OFFSET),
+                         (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 100 - SQUARE_SIZE // 2 + OFFSET), CROSS_WIDTH)
+            pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 100 - SQUARE_SIZE // 2 + OFFSET),
+                         (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 100 + SQUARE_SIZE // 2 - OFFSET), CROSS_WIDTH)
+
+    # Affichage du texte de fin de partie ("Winner!" ou "Game Over")
+        font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
         if player == 1 or player == 2:
             text = font.render("Winner!", True, BLACK)
-            screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
-            if player == 1:
-                pygame.draw.circle(screen, CIRCLE_COLOR, (WIDTH // 2, HEIGHT // 2 - 30), CIRCLE_RADIUS, CIRCLE_WIDTH)
-            elif player == 2:
-                pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 30 + SQUARE_SIZE // 2 - OFFSET),
-                                 (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 30 - SQUARE_SIZE // 2 + OFFSET), CROSS_WIDTH)
-                pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 30 - SQUARE_SIZE // 2 + OFFSET),
-                                 (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 30 + SQUARE_SIZE // 2 - OFFSET), CROSS_WIDTH)
-
         else:
             text = font.render("Game Over", True, BLACK)
-            screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
+    
+    # Positionne le texte de fin juste en dessous du dessin
+        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2))
 
-        # Affichage des instructions
+    # Affichage des instructions en dessous
         font_small = pygame.font.SysFont(None, 30)
         instructions = [
             "Press 'Q' to Quit",
@@ -224,7 +225,7 @@ class Game:
         ]
         for i, instruction in enumerate(instructions):
             instr_text = font_small.render(instruction, True, BLACK)
-            screen.blit(instr_text, (WIDTH // 2 - instr_text.get_width() // 2, HEIGHT // 2 + i * 40))
+            screen.blit(instr_text, (WIDTH // 2 - instr_text.get_width() // 2, HEIGHT // 2 + 60 + i * 40))
 
     # Fonction pour dessiner les lignes du plateau
     def show_lines(self):
