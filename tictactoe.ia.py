@@ -191,7 +191,10 @@ class Game:
             self.show_lines()  # Affichage des lignes du plateau
 
     # --- DRAW METHODS ---
-
+        
+    # --- 
+    # End screen 
+    # ---
     def display_end_screen(self, player):
         screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
         
@@ -218,10 +221,9 @@ class Game:
         font_small = pygame.font.SysFont(None, 30)
         instructions = [
             "Press 'Q' to Quit",
-            "Press 'R' to Restart",
-            "Press 'M' to Change Game Mode",
-            "Press '0' for Easy AI",
-            "Press '1' for Impossible AI"
+            "Press '1' to PVP",
+            "Press '2' for Easy AI",
+            "Press '3' for Impossible AI"
         ]
         for i, instruction in enumerate(instructions):
             instr_text = font_small.render(instruction, True, BLACK)
@@ -288,6 +290,61 @@ def main():
     board = game.board  # Référence au plateau du jeu
     ai = game.ai  # Référence à l'IA
 
+    # Fonction pour afficher l'écran de démarrage
+def start_screen():
+    screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
+
+    # Texte de bienvenue
+    font = pygame.font.SysFont(None, 60)
+    title = font.render("TIC TAC TOE", True, BLACK)
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 4))
+
+    # Instructions de sélection du mode de jeu
+    font_small = pygame.font.SysFont(None, 40)
+    pvp_text = font_small.render("1. Player vs Player", True, BLACK)
+    ai_easy_text = font_small.render("2. Player vs Easy AI", True, BLACK)
+    ai_hard_text = font_small.render("3. Player vs Hard AI", True, BLACK)
+    
+    # Positionne les options sur l'écran
+    screen.blit(pvp_text, (WIDTH // 2 - pvp_text.get_width() // 2, HEIGHT // 2))
+    screen.blit(ai_easy_text, (WIDTH // 2 - ai_easy_text.get_width() // 2, HEIGHT // 2 + 60))
+    screen.blit(ai_hard_text, (WIDTH // 2 - ai_hard_text.get_width() // 2, HEIGHT // 2 + 120))
+    
+    pygame.display.update()  # Met à jour l'écran
+    
+    # Boucle d'attente jusqu'à ce que le joueur fasse un choix
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:  # PvP
+                    return 'pvp'
+                elif event.key == pygame.K_2:  # Easy AI
+                    return 'ai', 0
+                elif event.key == pygame.K_3:  # Hard AI
+                    return 'ai', 1
+
+# Fonction principale du jeu
+def main():
+    pygame.init()
+    
+    # Appel de l'écran de démarrage pour sélectionner le mode
+    selected_mode = start_screen()
+    
+    # Variables du jeu
+    game = Game()  # Instancie un objet Game
+    board = game.board  # Référence au plateau du jeu
+    ai = game.ai  # Référence à l'IA
+
+    # Applique les options de l'écran de démarrage
+    if selected_mode == 'pvp':
+        game.gamemode = 'pvp'
+    else:
+        game.gamemode = 'ai'
+        ai.level = selected_mode[1]
+
     # --- MAINLOOP ---
 
     while True:
@@ -297,26 +354,22 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()  # Ferme Pygame
                 sys.exit()  # Quitte le programme
-
-            # Change de mode si l'utilisateur appuie sur la touche "M"
+ 
             if event.type == pygame.KEYDOWN:
 
                 if event.key == pygame.K_q:
                     pygame.quit()
                     sys.exit()
 
-                if event.key == pygame.K_r:
-                    game.reset()
-                    board = game.board
-                    ai = game.ai
-
-                if event.key == pygame.K_m:
-                    game.change_gamemode() # Change le mode de jeu entre PvP et IA
+                if event.key == pygame.K_1:
+                    game.gamemode = 'pvp'  # Change le mode de jeu entre PvP et IA
                 
-                if event.key == pygame.K_0:
+                if event.key == pygame.K_2:
+                    game.gamemode = 'ai'
                     ai.level = 0
 
-                if event.key == pygame.K_1:
+                if event.key == pygame.K_3:
+                    game.gamemode = 'ai'
                     ai.level = 1
 
             # Gestion des clics de souris
