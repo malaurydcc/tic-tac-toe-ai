@@ -198,7 +198,7 @@ class Game:
         # Affichage du texte de fin de partie
         font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
         if winner == 0:
-            text = font.render('Match Nul', True, LINE_COLOR)
+            text = font.render('Game Over', True, BLACK)
         else:
             text = font.render(f'Player {winner} Wins!', True, BLACK)
         screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
