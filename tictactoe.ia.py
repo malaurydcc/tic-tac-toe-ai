@@ -192,16 +192,26 @@ class Game:
 
     # --- DRAW METHODS ---
 
-    def display_end_screen(self, winner):
+    def display_end_screen(self, player):
         screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
 
         # Affichage du texte de fin de partie
         font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
-        if winner == 0:
-            text = font.render('Game Over', True, BLACK)
+        
+        if player == 1 or player == 2:
+            text = font.render("Winner!", True, BLACK)
+            screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
+            if player == 1:
+                pygame.draw.circle(screen, CIRCLE_COLOR, (WIDTH // 2, HEIGHT // 2 - 30), CIRCLE_RADIUS, CIRCLE_WIDTH)
+            elif player == 2:
+                pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 30 + SQUARE_SIZE // 2 - OFFSET),
+                                 (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 30 - SQUARE_SIZE // 2 + OFFSET), CROSS_WIDTH)
+                pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 30 - SQUARE_SIZE // 2 + OFFSET),
+                                 (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 30 + SQUARE_SIZE // 2 - OFFSET), CROSS_WIDTH)
+
         else:
-            text = font.render(f'Player {winner} Wins!', True, BLACK)
-        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
+            text = font.render("Game Over", True, BLACK)
+            screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
 
         # Affichage des instructions
         font_small = pygame.font.SysFont(None, 30)
