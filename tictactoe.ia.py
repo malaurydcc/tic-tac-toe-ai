@@ -4,8 +4,6 @@ import sys
 import pygame
 import random
 import numpy as np
-
-# Importation des constantes pour les dimensions, les couleurs, etc.
 from constants import *
 
 # --- CONFIGURATION DE PYGAME ---
@@ -85,11 +83,7 @@ class Board:
     
     # Retourne une liste des cases vides restantes
     def get_empty_squares(self):
-        empty_squares = []
-        for row in range(ROWS):
-            for col in range(COLS):
-                if self.empty_square(row, col):
-                    empty_squares.append((row, col))  # Ajoute les coordonnées des cases vides
+        empty_squares = [(row, col) for row in range(ROWS) for col in range(COLS) if self.empty_square(row, col)]
         return empty_squares
     
     # Vérifie si le plateau est plein
@@ -119,54 +113,33 @@ class AI:
 
     # Fonction minimax pour trouver le meilleur coup possible
     def minimax(self, board, maximizing):
-        # Cas terminal : vérifie si un joueur a gagné ou si c'est une égalité
         case = board.final_state()
-
-        # Si le joueur 1 gagne
         if case == 1:
-            return 1, None  # Retourne une évaluation positive
-
-        # Si le joueur 2 gagne
+            return 1, None
         if case == 2:
-            return -1, None  # Retourne une évaluation négative
+            return -1, None
+        if board.isfull():
+            return 0, None
 
-        # Si c'est une égalité
-        elif board.isfull():
-            return 0, None  # Retourne une évaluation neutre
-
-        # Si c'est au tour du joueur maximisant (joueur 1)
+        best_move = None
         if maximizing:
-            max_eval = -100  # Initialise une évaluation basse
-            best_move = None  # Initialise le meilleur mouvement
-            empty_squares = board.get_empty_squares()  # Récupère les cases vides
-
-            # Explore chaque case vide et évalue chaque possibilité
-            for (row, col) in empty_squares:
-                temp_board = copy.deepcopy(board)  # Crée un tableau temporaire
-                temp_board.mark_square(row, col, 1)  # Marque la case pour le joueur 1
-                eval = self.minimax(temp_board, False)[0]  # Appelle minimax de manière récursive
+            max_eval = -float('inf')
+            for (row, col) in board.get_empty_squares():
+                temp_board = copy.deepcopy(board)
+                temp_board.mark_square(row, col, 1)
+                eval = self.minimax(temp_board, False)[0]
                 if eval > max_eval:
-                    max_eval = eval  # Met à jour la meilleure évaluation
-                    best_move = (row, col)  # Met à jour le meilleur mouvement
+                    max_eval, best_move = eval, (row, col)
             return max_eval, best_move
-
-        # Si c'est au tour du joueur minimisant (joueur 2)
-        elif not maximizing:
-            min_eval = 100  # Initialise une évaluation haute
-            best_move = None
-            empty_squares = board.get_empty_squares()
-
-            # Explore chaque case vide et évalue chaque possibilité
-            for (row, col) in empty_squares:
-                temp_board = copy.deepcopy(board)  # Crée un tableau temporaire
-                temp_board.mark_square(row, col, self.player)  # Marque la case pour le joueur 2
-                eval = self.minimax(temp_board, True)[0]  # Appelle minimax de manière récursive
+        else:
+            min_eval = float('inf')
+            for (row, col) in board.get_empty_squares():
+                temp_board = copy.deepcopy(board)
+                temp_board.mark_square(row, col, self.player)
+                eval = self.minimax(temp_board, True)[0]
                 if eval < min_eval:
-                    min_eval = eval  # Met à jour la plus basse évaluation
-                    best_move = (row, col)  # Met à jour le meilleur mouvement
+                    min_eval, best_move = eval, (row, col)
             return min_eval, best_move
-
-    # --- EVALUATION PRINCIPALE ---
 
     # Évalue le prochain coup de l'IA en fonction de son niveau
     def eval(self, main_board):
@@ -190,11 +163,6 @@ class Game:
             self.running = True  # État du jeu actif
             self.show_lines()  # Affichage des lignes du plateau
 
-    # --- DRAW METHODS ---
-        
-    # --- 
-    # End screen 
-    # ---
     def display_end_screen(self, player):
         screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
         
@@ -257,8 +225,6 @@ class Game:
             end_asc = (col * SQUARE_SIZE + SQUARE_SIZE - OFFSET, row * SQUARE_SIZE + OFFSET)
             pygame.draw.line(screen, CROSS_COLOR, start_asc, end_asc, CROSS_WIDTH)
 
-    # --- OTHER METHODS ---
-
     # Fonction pour effectuer un mouvement
     def make_move(self, row, col):
         self.board.mark_square(row, col, self.player)  # Marque la case pour le joueur actuel
@@ -267,7 +233,7 @@ class Game:
 
     # Alterne entre les joueurs (1 ou 2)
     def next_turn(self):
-        self.player = self.player % 2 + 1  # Change de joueur (modulo)
+        self.player = 3 - self.player
 
     # Change le mode de jeu (IA ou PvP)
     def change_gamemode(self):
@@ -281,38 +247,22 @@ class Game:
     def reset(self):
         self.__init__()  # Réinitialise tous les paramètres du jeu
 
-# --- BOUCLE PRINCIPALE ---
 
-# Fonction principale du jeu
-def main():
-    # Variables du jeu
-    game = Game()  # Instancie un objet Game
-    board = game.board  # Référence au plateau du jeu
-    ai = game.ai  # Référence à l'IA
-
-    # Fonction pour afficher l'écran de démarrage
+# --- ÉCRAN DE DÉMARRAGE ---
 def start_screen():
     screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
-
-    # Texte de bienvenue
     font = pygame.font.SysFont(None, 60)
     title = font.render("TIC TAC TOE", True, BLACK)
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 4))
 
     # Instructions de sélection du mode de jeu
     font_small = pygame.font.SysFont(None, 40)
-    pvp_text = font_small.render("1. Player vs Player", True, BLACK)
-    ai_easy_text = font_small.render("2. Player vs Easy AI", True, BLACK)
-    ai_hard_text = font_small.render("3. Player vs Hard AI", True, BLACK)
-    
-    # Positionne les options sur l'écran
-    screen.blit(pvp_text, (WIDTH // 2 - pvp_text.get_width() // 2, HEIGHT // 2))
-    screen.blit(ai_easy_text, (WIDTH // 2 - ai_easy_text.get_width() // 2, HEIGHT // 2 + 60))
-    screen.blit(ai_hard_text, (WIDTH // 2 - ai_hard_text.get_width() // 2, HEIGHT // 2 + 120))
+    options = ["1. Player vs Player", "2. Player vs Easy AI", "3. Player vs Hard AI"]
+    for i, option in enumerate(options):
+        text = font_small.render(option, True, BLACK)
+        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 + i * 50))
     
     pygame.display.update()  # Met à jour l'écran
-    
-    # Boucle d'attente jusqu'à ce que le joueur fasse un choix
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -326,35 +276,24 @@ def start_screen():
                 elif event.key == pygame.K_3:  # Hard AI
                     return 'ai', 1
 
-# Fonction principale du jeu
+# --- FONCTION PRINCIPALE ---
 def main():
-    pygame.init()
-    
-    # Appel de l'écran de démarrage pour sélectionner le mode
-    selected_mode = start_screen()
-    
-    # Variables du jeu
-    game = Game()  # Instancie un objet Game
+    mode = start_screen()
+    game = Game()
     board = game.board  # Référence au plateau du jeu
     ai = game.ai  # Référence à l'IA
-
-    # Applique les options de l'écran de démarrage
-    if selected_mode == 'pvp':
+    
+    if mode == 'pvp':
         game.gamemode = 'pvp'
     else:
-        game.gamemode = 'ai'
-        ai.level = selected_mode[1]
-
-    # --- MAINLOOP ---
+        game.gamemode, game.ai.level = mode
 
     while True:
-        # Gestion des événements
         for event in pygame.event.get():
-            # Fermeture de la fenêtre
             if event.type == pygame.QUIT:
-                pygame.quit()  # Ferme Pygame
-                sys.exit()  # Quitte le programme
- 
+                pygame.quit()
+                sys.exit()
+
             if event.type == pygame.KEYDOWN:
 
                 if event.key == pygame.K_q:
