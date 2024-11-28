@@ -156,46 +156,12 @@ class AI:
 class Game:
      
     def __init__(self):
-            self.board = Board()  # Initialisation du plateau de jeu
-            self.ai = AI()  # Création d'une instance de l'IA
-            self.player = 1  # Début du jeu avec le joueur 1 (cercle)
-            self.gamemode = 'ai'  # Mode par défaut: joueur vs IA
-            self.running = True  # État du jeu actif
-            self.show_lines()  # Affichage des lignes du plateau
-
-    def display_end_screen(self, player):
-        screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
-        
-    # Affichage du cercle ou de la croix en haut de l'écran
-        if player == 1:
-            pygame.draw.circle(screen, CIRCLE_COLOR, (WIDTH // 2, HEIGHT // 2 - 100), CIRCLE_RADIUS, CIRCLE_WIDTH)
-        elif player == 2:
-            pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 100 + SQUARE_SIZE // 2 - OFFSET),
-                         (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 100 - SQUARE_SIZE // 2 + OFFSET), CROSS_WIDTH)
-            pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 100 - SQUARE_SIZE // 2 + OFFSET),
-                         (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 100 + SQUARE_SIZE // 2 - OFFSET), CROSS_WIDTH)
-
-    # Affichage du texte de fin de partie ("Winner!" ou "Game Over")
-        font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
-        if player == 1 or player == 2:
-            text = font.render("Winner!", True, BLACK)
-        else:
-            text = font.render("Game Over", True, BLACK)
-    
-    # Positionne le texte de fin juste en dessous du dessin
-        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2))
-
-    # Affichage des instructions en dessous
-        font_small = pygame.font.SysFont(None, 30)
-        instructions = [
-            "Press 'Q' to Quit",
-            "Press '1' to PVP",
-            "Press '2' for Easy AI",
-            "Press '3' for Impossible AI"
-        ]
-        for i, instruction in enumerate(instructions):
-            instr_text = font_small.render(instruction, True, BLACK)
-            screen.blit(instr_text, (WIDTH // 2 - instr_text.get_width() // 2, HEIGHT // 2 + 60 + i * 40))
+        self.board = Board()  # Initialisation du plateau de jeu
+        self.ai = AI()  # Création d'une instance de l'IA
+        self.player = 1  # Début du jeu avec le joueur 1 (cercle)
+        self.gamemode = 'ai'  # Mode par défaut: joueur vs IA
+        self.running = True  # État du jeu actif
+        self.show_lines()  # Affichage des lignes du plateau
 
     # Fonction pour dessiner les lignes du plateau
     def show_lines(self):
@@ -275,6 +241,50 @@ def start_screen():
                     return 'ai', 0
                 elif event.key == pygame.K_3:  # Hard AI
                     return 'ai', 1
+                
+# --- ÉCRAN DE FIN ---
+def display_end_screen(winner):
+    screen.fill(BG_COLOR)  # Remplit l'écran avec la couleur de fond
+        
+    # Affichage du cercle ou de la croix en haut de l'écran
+    if winner == 1:
+        pygame.draw.circle(screen, CIRCLE_COLOR, (WIDTH // 2, HEIGHT // 2 - 100), CIRCLE_RADIUS, CIRCLE_WIDTH)
+    elif winner == 2:
+        pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 100 + SQUARE_SIZE // 2 - OFFSET),
+                     (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 100 - SQUARE_SIZE // 2 + OFFSET), CROSS_WIDTH)
+        pygame.draw.line(screen, CROSS_COLOR, (WIDTH // 2 - SQUARE_SIZE // 2 + OFFSET, HEIGHT // 2 - 100 - SQUARE_SIZE // 2 + OFFSET),
+                     (WIDTH // 2 + SQUARE_SIZE // 2 - OFFSET, HEIGHT // 2 - 100 + SQUARE_SIZE // 2 - OFFSET), CROSS_WIDTH)
+
+    # Affichage du texte de fin de partie ("Winner!" ou "Game Over")
+    font = pygame.font.SysFont(None, 60)  # Police pour le message de fin
+    if winner == 1 or winner == 2:
+        text = font.render("Winner!", True, BLACK)
+    else:
+        text = font.render("Game Over", True, BLACK)
+    
+    # Positionne le texte de fin juste en dessous du dessin
+    screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2))
+
+    # Affichage des instructions en dessous
+    font_small = pygame.font.SysFont(None, 30)
+    options = ["1. Player vs Player", "2. Player vs Easy AI", "3. Player vs Hard AI"]
+    for i, instruction in enumerate(options):
+        instr_text = font_small.render(instruction, True, BLACK)
+        screen.blit(instr_text, (WIDTH // 2 - instr_text.get_width() // 2, HEIGHT // 2 + 60 + i * 40))
+
+    pygame.display.update()  # Met à jour l'écran
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:  # PvP
+                    return 'pvp'
+                elif event.key == pygame.K_2:  # Easy AI
+                    return 'ai', 0
+                elif event.key == pygame.K_3:  # Hard AI
+                    return 'ai', 1
 
 # --- FONCTION PRINCIPALE ---
 def main():
@@ -324,7 +334,7 @@ def main():
                     if game.isover():
                         game.running = False
                         winner = board.final_state()  # Déterminer le gagnant ou si match nul
-                        game.display_end_screen(winner)  # Afficher l'écran de fin
+                        display_end_screen(winner)  # Afficher l'écran de fin
 
         # Mode de jeu contre l'IA
         if game.gamemode == 'ai' and game.player == ai.player and game.running:
@@ -337,7 +347,7 @@ def main():
             if game.isover():
                 game.running = False
                 winner = board.final_state()  # Déterminer le gagnant ou si match nul
-                game.display_end_screen(winner)  # Afficher l'écran de fin
+                mode = display_end_screen(winner)  # Afficher l'écran de fin
 
         # Mise à jour de l'écran
         pygame.display.update()
