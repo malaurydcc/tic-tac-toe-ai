@@ -288,11 +288,12 @@ def display_end_screen(winner):
 
 # --- FONCTION PRINCIPALE ---
 def main():
-    mode = start_screen()
+    mode = start_screen()  # Démarrage : sélection du mode de jeu
     game = Game()
-    board = game.board  # Référence au plateau du jeu
-    ai = game.ai  # Référence à l'IA
-    
+    board = game.board
+    ai = game.ai
+
+    # Configuration initiale en fonction du mode choisi
     if mode == 'pvp':
         game.gamemode = 'pvp'
     else:
@@ -304,52 +305,53 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+            # Gestion des touches clavier
             if event.type == pygame.KEYDOWN:
-
                 if event.key == pygame.K_q:
                     pygame.quit()
                     sys.exit()
 
-                if event.key == pygame.K_1:
-                    game.gamemode = 'pvp'  # Change le mode de jeu entre PvP et IA
-                
-                if event.key == pygame.K_2:
-                    game.gamemode = 'ai'
-                    ai.level = 0
-
-                if event.key == pygame.K_3:
-                    game.gamemode = 'ai'
-                    ai.level = 1
-
             # Gestion des clics de souris
             if event.type == pygame.MOUSEBUTTONDOWN and game.running:
-                pos = event.pos  # Récupère la position du clic
-                row = pos[1] // SQUARE_SIZE  # Calcul de la ligne cliquée
-                col = pos[0] // SQUARE_SIZE  # Calcul de la colonne cliquée
+                pos = event.pos
+                row = pos[1] // SQUARE_SIZE
+                col = pos[0] // SQUARE_SIZE
 
-                # human mark sqr
                 if board.empty_square(row, col) and game.running:
                     game.make_move(row, col)
 
                     if game.isover():
                         game.running = False
-                        winner = board.final_state()  # Déterminer le gagnant ou si match nul
-                        display_end_screen(winner)  # Afficher l'écran de fin
+                        winner = board.final_state()
+                        new_mode = display_end_screen(winner)  # Récupère la sélection de l'écran de fin
 
-        # Mode de jeu contre l'IA
+                        # Réinitialise le jeu avec le nouveau mode
+                        if new_mode == 'pvp':
+                            game = Game()
+                            game.gamemode = 'pvp'
+                        else:
+                            game = Game()
+                            game.gamemode, game.ai.level = new_mode
+
+        # Mode IA
         if game.gamemode == 'ai' and game.player == ai.player and game.running:
             pygame.display.update()
-
-            # L'IA effectue son mouvement
             row, col = ai.eval(board)
             game.make_move(row, col)
 
             if game.isover():
                 game.running = False
-                winner = board.final_state()  # Déterminer le gagnant ou si match nul
-                mode = display_end_screen(winner)  # Afficher l'écran de fin
+                winner = board.final_state()
+                new_mode = display_end_screen(winner)  # Récupère la sélection de l'écran de fin
 
-        # Mise à jour de l'écran
+                # Réinitialise le jeu avec le nouveau mode
+                if new_mode == 'pvp':
+                    game = Game()
+                    game.gamemode = 'pvp'
+                else:
+                    game = Game()
+                    game.gamemode, game.ai.level = new_mode
+
         pygame.display.update()
 
 main()
