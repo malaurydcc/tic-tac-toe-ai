@@ -74,8 +74,10 @@ class Board:
 
     # Marque une case spécifique pour un joueur (1 pour cercle, 2 pour croix)
     def mark_square(self, row, col, player):
-        self.squares[row][col] = player  # Place le symbole du joueur dans la case
-        self.marked_squares += 1  # Incrémente le compteur de cases marquées
+        if self.squares[row][col] != 0:
+            print(f"Erreur : la case ({row}, {col}) est déjà marquée.")
+        self.squares[row][col] = player
+        self.marked_squares += 1
 
     # Vérifie si une case est vide
     def empty_square(self, row, col):
@@ -211,6 +213,7 @@ class Game:
 
     # Réinitialise le jeu
     def reset(self):
+        screen.fill(BG_COLOR)  # Nettoie complètement l'écran
         self.__init__()  # Réinitialise tous les paramètres du jeu
 
 
@@ -273,6 +276,7 @@ def display_end_screen(winner):
         screen.blit(instr_text, (WIDTH // 2 - instr_text.get_width() // 2, HEIGHT // 2 + 60 + i * 40))
 
     pygame.display.update()  # Met à jour l'écran
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -329,8 +333,10 @@ def main():
                         if new_mode == 'pvp':
                             game = Game()
                             game.gamemode = 'pvp'
+                            board = game.board  # Met à jour le plateau
                         else:
                             game = Game()
+                            board = game.board  # Met à jour le plateau
                             game.gamemode, game.ai.level = new_mode
 
         # Mode IA
@@ -348,8 +354,10 @@ def main():
                 if new_mode == 'pvp':
                     game = Game()
                     game.gamemode = 'pvp'
+                    board = game.board  # Met à jour le plateau
                 else:
                     game = Game()
+                    board = game.board  # Met à jour le plateau
                     game.gamemode, game.ai.level = new_mode
 
         pygame.display.update()
